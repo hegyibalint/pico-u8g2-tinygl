@@ -1,0 +1,17 @@
+{
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        }
+    ]
+}
