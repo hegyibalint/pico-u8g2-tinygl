@@ -1,14 +1,20 @@
-cmake_minimum_required(VERSION 3.13...3.27)
+cmake_minimum_required(VERSION 3.30)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Modules used
 include(ExternalProject)
 include(FetchContent)
 
+# Enable colors on Ninja
+if(CMAKE_GENERATOR MATCHES "Ninja")
+    add_compile_options(-fdiagnostics-color=always)
+endif()
+
 # Settings
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Including and initializing the Raspberry Pico SDK
-include(${PICO_SDK_LOCATION})
+include($ENV{PICO_SDK}/pico_sdk_init.cmake)
 pico_sdk_init()
 
 # Base setup for the project
@@ -22,10 +28,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/meadiode/tinygl_1b
     GIT_TAG main
 )
-FetchContent_GetProperties(tinygl)
-if(NOT tinygl_POPULATED)
-    FetchContent_Populate(tinygl)
-endif()
+FetchContent_MakeAvailable(tinygl)
 target_include_directories(pico_oled PRIVATE ${tinygl_SOURCE_DIR}/include)
 file(GLOB TINYGL_SOURCES ${tinygl_SOURCE_DIR}/src/*.c)
 target_sources(pico_oled PRIVATE ${TINYGL_SOURCES})
@@ -36,11 +39,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/olikraus/u8g2.git
     GIT_TAG master
 )
-# Download the sources (if not already downloaded)
-FetchContent_GetProperties(u8g2)
-if(NOT u8g2_POPULATED)
-    FetchContent_Populate(u8g2)
-endif()
+FetchContent_MakeAvailable(u8g2)
 # This is a bit odd, as U8G2 is a CMake project, but if you just link it in `target_link_libraries`, the linker will complain with:
 #  > pico_oled.elf section `.rodata' will not fit in region `FLASH'
 #  > region `FLASH' overflowed by 11419420 bytes
@@ -50,4 +49,8 @@ target_include_directories(pico_oled PRIVATE ${u8g2_SOURCE_DIR}/csrc)
 file(GLOB U8G2_SOURCES ${u8g2_SOURCE_DIR}/csrc/*.c)
 target_sources(pico_oled PRIVATE ${U8G2_SOURCES})
 
-target_link_libraries(pico_oled pico_stdlib hardware_spi)
+# Definitions
+#  - Enable bit-render in tinygl
+target_compile_definitions(pico_oled PRIVATE TGL_FEATURE_RENDER_BITS=1)
+
+target_link_libraries(pico_oled pico_stdlib pico_stdio_rtt hardware_spi)

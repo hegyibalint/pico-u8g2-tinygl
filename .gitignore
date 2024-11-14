@@ -1,1 +1,6 @@
 build/
+.venv/
+
+# Debug artifacts
+*.png
+*.bin

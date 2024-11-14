@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
+#include <pico/assert.h>
 #include <hardware/spi.h>
 
 #include "u8g2.h"
 #include "zbuffer.h"
 #include "GL/gl.h"
 
-static u8g2_t u8g2;
+#define DISPLAY_WIDTH 256
+#define DISPLAY_HEIGHT 64
+#define DISPLAY_PAGE_SIZE 8
+
 static ZBuffer *frame_buffer;
+static u8g2_t display;
+
+const char *message = "Hello, World!";
 
 // Function to adopt SPI functions for the display
 uint8_t u8x8_byte_hw_spi_pico(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
@@ -43,11 +50,9 @@ uint8_t u8x8_byte_hw_spi_pico(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
         break;
     case U8X8_MSG_BYTE_START_TRANSFER:
         // Start SPI transfer
-        printf("Start SPI transfer\n");
         break;
     case U8X8_MSG_BYTE_END_TRANSFER:
         // End SPI transfer
-        printf("End SPI transfer\n");
         break;
     default:
         printf("Unknown message: %d\n", msg);
@@ -70,14 +75,11 @@ uint8_t u8x8_gpio_and_delay_pico(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, voi
         gpio_set_dir(7, GPIO_OUT);
         break;
     case U8X8_MSG_GPIO_CS:
-        printf("CS handled by HW SPI\n");
         break;
     case U8X8_MSG_GPIO_DC:
-        printf("Set GPIO DC: %d\n", arg_int);
         gpio_put(6, arg_int);
         break;
     case U8X8_MSG_GPIO_RESET:
-        printf("Set Reset: %d\n", arg_int);
         gpio_put(7, arg_int);
         break;
     case U8X8_MSG_DELAY_MILLI:
@@ -100,102 +102,41 @@ uint8_t u8x8_gpio_and_delay_pico(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, voi
     return 1; // Command processed successfully
 }
 
+void flush_frame_buffer()
+{
+    u8g2_SendBuffer(&display);
+}
+
 void setup_u8g2()
 {
-    u8g2_Setup_sh1122_256x64_f(
-        &u8g2,
-        U8G2_R0,
-        u8x8_byte_hw_spi_pico,
-        u8x8_gpio_and_delay_pico);
-    u8g2_InitDisplay(&u8g2);
-    u8g2_SetPowerSave(&u8g2, 0);
-    printf("Display initialized\n");
+    // u8g2_Setup_sh1122_256x64_XX done by hand, so we can set our own buffer
+    u8g2_SetupDisplay(&display, u8x8_d_sh1122_256x64, u8x8_cad_001, u8x8_byte_hw_spi_pico, u8x8_gpio_and_delay_pico);
+    u8g2_SetupBuffer(&display, frame_buffer->pbuf, DISPLAY_PAGE_SIZE, u8g2_ll_hvline_horizontal_right_lsb, U8G2_R0);
+
+    u8g2_InitDisplay(&display);
+    u8g2_SetPowerSave(&display, 0);
 
     // Draw a rectangle
-    printf("Drawing\n");
-    u8g2_ClearBuffer(&u8g2);
-    u8g2_SetFont(&u8g2, u8g2_font_ncenB14_tr);
-    u8g2_DrawStr(&u8g2, 0, 20, "Hello, World!!");
-    u8g2_SendBuffer(&u8g2);
-    printf("Drawing finished\n");
+    u8g2_ClearBuffer(&display);
+    u8g2_SetFont(&display, u8g2_font_ncenB14_tr);
+    u8g2_DrawStr(&display, 0, 20, "Initialized");
+    flush_frame_buffer();
 }
 
 void setup_tinygl()
 {
-    int width = u8g2_GetDisplayWidth(&u8g2);
-    int height = u8g2_GetDisplayHeight(&u8g2);
-    frame_buffer = ZB_open(width, height, ZB_MODE_INDEX, 0);
     glInit(frame_buffer);
-    glViewport(0, 0, width, height);
-}
-
-void print_frame_buffer()
-{
-    int width = u8g2_GetDisplayWidth(&u8g2);
-    assert(width == frame_buffer->xsize);
-
-    int height = u8g2_GetDisplayHeight(&u8g2);
-    assert(height == frame_buffer->ysize);
-
-    u8g2_ClearBuffer(&u8g2);
-    for (int x = 0; x < width; x++)
-    {
-        for (int y = 0; y < height; y++)
-        {
-            if (frame_buffer->pbuf[x + y * width] != 0)
-            {
-                u8g2_DrawPixel(&u8g2, x, y);
-            }
-        }
-        printf("\n");
-    }
-    u8g2_SendBuffer(&u8g2);
-}
-
-void loop_triangles()
-{
-    glMatrixMode(GL_MODELVIEW);
-
+    glViewport(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    // Set up the projection matrix
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glPushMatrix();
-    glRotatef(1.5, 0, 0, 1);
+    glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 10.0);
+    // Set up the modelview matrix
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-    glBegin(GL_TRIANGLES);
-    glColor3f(1, 1, 1);
-    glVertex3f(-0.9, -0.9, 0.0);
-    glVertex3f(0.9, -0.9, 0.0);
-    glVertex3f(0, 0.9, 0.0);
-    glEnd();
-    glPopMatrix();
-
-    ZB_setDitheringMap(frame_buffer, 3);
-
-    print_frame_buffer();
-    loop_noop();
-}
-
-void loop_cubes()
-{
-    int width = u8g2_GetDisplayWidth(&u8g2);
-    int height = u8g2_GetDisplayHeight(&u8g2);
-    int t = 0;
-    while (true)
-    {
-        sleep_ms(1000 / 60);
-        u8g2_ClearBuffer(&u8g2);
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if ((x + t) % 8 < 4 && (y + t) % 8 < 4)
-                {
-                    u8g2_DrawPixel(&u8g2, x, y);
-                }
-            }
-        }
-        u8g2_SendBuffer(&u8g2);
-        t = t < 7 ? t + 1 : 0;
-    }
+    // Set up the dithering map
+    ZB_setDitheringMap(frame_buffer, DITHER_MAP_BAYER4);
 }
 
 void loop_noop()
@@ -206,9 +147,62 @@ void loop_noop()
     }
 }
 
+void loop_triangles()
+{
+    // Clear the buffer using tinygl
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set up the modelview matrix
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -5.0f); // Move the triangle back so it's visible
+
+    // Draw a simple triangle
+    glBegin(GL_TRIANGLES);
+    glColor3f(1, 0, 0);
+    glVertex3f(-1.0f, -1.0f, 0.0f);
+    glColor3f(0, 1, 0);
+    glVertex3f(1.0f, -1.0f, 0.0f);
+    glColor3f(0, 0, 1);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glEnd();
+
+    // Send the buffer to the display
+    while (true)
+    {
+        flush_frame_buffer();
+    }
+}
+
+void loop_cubes()
+{
+    int width = u8g2_GetDisplayWidth(&display);
+    int height = u8g2_GetDisplayHeight(&display);
+    int t = 0;
+    while (true)
+    {
+        sleep_ms(1000 / 60);
+        u8g2_ClearBuffer(&display);
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if ((x + t) % 8 < 4 && (y + t) % 8 < 4)
+                {
+                    u8g2_DrawPixel(&display, x, y);
+                }
+            }
+        }
+        flush_frame_buffer();
+        t = t < 7 ? t + 1 : 0;
+    }
+}
+
 int main()
 {
     stdio_init_all();
+
+    // Create the shared frame buffer
+    frame_buffer = ZB_open(DISPLAY_WIDTH, DISPLAY_HEIGHT, ZB_MODE_INDEX, 0);
     setup_u8g2();
     setup_tinygl();
     loop_triangles();
