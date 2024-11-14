@@ -149,27 +149,33 @@ void loop_noop()
 
 void loop_triangles()
 {
-    // Clear the buffer using tinygl
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    int t = 0;
 
-    // Set up the modelview matrix
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -5.0f); // Move the triangle back so it's visible
-
-    // Draw a simple triangle
-    glBegin(GL_TRIANGLES);
-    glColor3f(1, 0, 0);
-    glVertex3f(-1.0f, -1.0f, 0.0f);
-    glColor3f(0, 1, 0);
-    glVertex3f(1.0f, -1.0f, 0.0f);
-    glColor3f(0, 0, 1);
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glEnd();
-
-    // Send the buffer to the display
     while (true)
     {
+        // Clear the buffer using tinygl
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Set up the modelview matrix
+        glLoadIdentity();
+        glTranslatef(0.0f, 0.0f, -5.0f); // Move the triangle back so it's visible
+
+        glRotatef(t / 10.0f, 0.0f, 1.0f, 0.0f); // Rotate the triangle
+
+        // Draw a simple triangle
+        glBegin(GL_TRIANGLES);
+        glColor3f(1, 0, 0);
+        glVertex3f(-1.0f, -1.0f, 0.0f);
+        glColor3f(0, 1, 0);
+        glVertex3f(1.0f, -1.0f, 0.0f);
+        glColor3f(0, 0, 1);
+        glVertex3f(0.0f, 1.0f, 0.0f);
+        glEnd();
+
+        // Send the buffer to the display
         flush_frame_buffer();
+        sleep_ms(1000 / 60);
+        t++;
     }
 }
 

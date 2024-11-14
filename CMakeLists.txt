@@ -23,30 +23,17 @@ file(GLOB SOURCES src/*.c)
 add_executable(pico_oled ${SOURCES})
 
 # Dependency - TinyGL
-FetchContent_Declare(
-    tinygl
-    GIT_REPOSITORY https://github.com/meadiode/tinygl_1b
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(tinygl)
-target_include_directories(pico_oled PRIVATE ${tinygl_SOURCE_DIR}/include)
-file(GLOB TINYGL_SOURCES ${tinygl_SOURCE_DIR}/src/*.c)
+target_include_directories(pico_oled PRIVATE ${CMAKE_SOURCE_DIR}/deps/tinygl_1b/include)
+file(GLOB TINYGL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/deps/tinygl_1b/src/*.c)
 target_sources(pico_oled PRIVATE ${TINYGL_SOURCES})
 
-# Dependency - U8G2
-FetchContent_Declare(
-    u8g2
-    GIT_REPOSITORY https://github.com/olikraus/u8g2.git
-    GIT_TAG master
-)
-FetchContent_MakeAvailable(u8g2)
 # This is a bit odd, as U8G2 is a CMake project, but if you just link it in `target_link_libraries`, the linker will complain with:
 #  > pico_oled.elf section `.rodata' will not fit in region `FLASH'
 #  > region `FLASH' overflowed by 11419420 bytes
 # i.e. the resulting binary is too big. And no, LTO doesn't help.
 # The solution is to add the U8G2 sources directly into the project, and not link it as a library.
-target_include_directories(pico_oled PRIVATE ${u8g2_SOURCE_DIR}/csrc)
-file(GLOB U8G2_SOURCES ${u8g2_SOURCE_DIR}/csrc/*.c)
+target_include_directories(pico_oled PRIVATE ${CMAKE_SOURCE_DIR}/deps/u8g2/csrc)
+file(GLOB U8G2_SOURCES ${CMAKE_SOURCE_DIR}/deps/u8g2/csrc/*.c)
 target_sources(pico_oled PRIVATE ${U8G2_SOURCES})
 
 # Definitions

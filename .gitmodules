@@ -1,0 +1,6 @@
+[submodule "deps/tinygl_1b"]
+	path = deps/tinygl_1b
+	url = https://github.com/meadiode/tinygl_1b
+[submodule "deps/u8g2"]
+	path = deps/u8g2
+	url = https://github.com/olikraus/u8g2.git
