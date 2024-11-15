@@ -21,6 +21,6 @@ jobs:
       with:
         repository: raspberrypi/pico-sdk
     # Set the PICO_SDK environment variable to the path of the pico-sdk repository
-    - run: apt update
-    - run: apt install cmake ninja gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+    - run: sudo apt update
+    - run: sudo apt install cmake ninja gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
     - run: cmake -G Ninja -B build -DPICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
