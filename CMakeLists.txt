@@ -14,7 +14,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Including and initializing the Raspberry Pico SDK
-include($ENV{PICO_SDK}/pico_sdk_init.cmake)
+include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 pico_sdk_init()
 
 # Base setup for the project
