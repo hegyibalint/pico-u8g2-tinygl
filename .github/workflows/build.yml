@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,4 +26,4 @@ jobs:
     # Set the PICO_SDK environment variable to the path of the pico-sdk repository
     - run: sudo apt update
     - run: sudo apt install cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-    - run: cmake -G Ninja -B build -DPICO_SDK_PATH=${GITHUB_WORKSPACE}/pico-sdk
+    - run: cmake -G Ninja -B buildx
