@@ -26,4 +26,5 @@ jobs:
     # Set the PICO_SDK environment variable to the path of the pico-sdk repository
     - run: sudo apt update
     - run: sudo apt install cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
-    - run: cmake -G Ninja -B buildx
+    - run: cmake -G Ninja -B build
+    - run: cmake --build build
