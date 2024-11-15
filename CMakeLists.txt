@@ -1,17 +1,13 @@
 cmake_minimum_required(VERSION 3.30)
-set(CMAKE_BUILD_TYPE Debug)
 
-# Modules used
-include(ExternalProject)
-include(FetchContent)
+# Settings
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Enable colors on Ninja
 if(CMAKE_GENERATOR MATCHES "Ninja")
     add_compile_options(-fdiagnostics-color=always)
 endif()
-
-# Settings
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Including and initializing the Raspberry Pico SDK
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)

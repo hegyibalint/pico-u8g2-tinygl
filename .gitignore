@@ -1,6 +1,10 @@
 build/
 .venv/
 
-# Debug artifacts
-*.png
+# Framebuffer capture files
+fb/
+*.mp4
 *.bin
+
+# OS
+.DS_Store
